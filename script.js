@@ -32,7 +32,7 @@ window.onload = () => {
         let categoricalColumns = columnNamesInput.value ? columnNamesInput.value.split(',') : [];
 
         if (file && runtime) {
-            disableInputs()
+            disableInputs();
             document.getElementById('downloadLink').style.display = 'none';
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
             // resetInputs()
