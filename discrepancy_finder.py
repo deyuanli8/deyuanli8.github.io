@@ -101,7 +101,7 @@ def local_search(df_vecs, p = 4, num_iter = 10, cols = None, initialize = True, 
         g = np.random.multivariate_normal(np.zeros(m), np.eye(m),1)[0]
         model = LinearRegression(fit_intercept = False)
         reg = model.fit(df.loc[cols][characteristics].T, g)
-        df.loc[cols, 'x'] = np.sign(reg.coef_)
+        df.loc[cols, 'x'] = np.sign(reg.coef_).astype(int)
 
     iter_cols = df.index if iter_all else cols
 

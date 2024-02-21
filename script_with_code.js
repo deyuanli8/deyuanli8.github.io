@@ -15,8 +15,13 @@ window.onload = () => {
     }
 
     let pyodideReady = loadPyodideAndPackages();
-
+    let isProcessing = false;
     document.getElementById('submitBtn').addEventListener('click', async (event) => {
+        if (isProcessing) {
+            console.log("Processing is already in progress.");
+            return; // Early exit if a process is already running
+        }
+        isProcessing = true;
         event.preventDefault(); // Prevent the default form submission
         let fileInput = document.getElementById('fileInput');
         let runtimeSelect = document.getElementById('runtimeSelect');
@@ -26,8 +31,10 @@ window.onload = () => {
         let categoricalColumns = columnNamesInput.value ? columnNamesInput.value.split(',') : [];
 
         if (file && runtime) {
+            disableInputs()
+            document.getElementById('downloadLink').style.display = 'none';
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-            resetInputs()
+            // resetInputs()
             
             if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
                 let reader = new FileReader();
@@ -142,7 +149,7 @@ def local_search(df_vecs, p = 4, num_iter = 10, cols = None, initialize = True, 
         g = np.random.multivariate_normal(np.zeros(m), np.eye(m),1)[0]
         model = LinearRegression(fit_intercept = False)
         reg = model.fit(df.loc[cols][characteristics].T, g)
-        df.loc[cols, 'x'] = np.sign(reg.coef_)
+        df.loc[cols, 'x'] = np.sign(reg.coef_).astype(int)
 
     iter_cols = df.index if iter_all else cols
 
@@ -335,8 +342,10 @@ output
                     let output = await pyodideInstance.runPython(pythonCode);
 
                     // Handle the output
-                    processingMessage.style.display = 'none'; // Hide the processing message
-                    createDownloadLink(output);
+                    document.getElementById('processingMessage').style.display = 'none'; // Hide the processing message
+                    resetInputs();
+                    createDownloadLink(output, fileName);
+                    enableInputs();
                 };
                 // Read the file as an ArrayBuffer for both CSV and Excel files
                 reader.readAsArrayBuffer(file);
@@ -344,21 +353,24 @@ output
                 alert('Please upload a CSV or Excel file.');
                 document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
                 resetInputs(); // Reset inputs even if file is not valid
+                enableInputs();
             }
         } else {
             alert('Please select a file and runtime.');
             document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
             resetInputs(); // Reset inputs even if conditions are not met
+            enableInputs();
         }
+        isProcessing = false;
     });
 
     // Function to create a downloadable link for the processed CSV data
-    function createDownloadLink(csvData) {
+    function createDownloadLink(csvData, processed_fileName) {
         const blob = new Blob([csvData], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const link = document.getElementById('downloadLink');
         link.href = url;
-        link.download = 'processed_file.csv';
+        link.download = 'processed_'+processed_fileName;
         link.style.display = 'block';
     }
 
@@ -367,5 +379,28 @@ output
         document.getElementById('runtimeSelect').value = '';
         document.getElementById('columnNamesInput').value = '';
         // Additional UI adjustments if necessary
+    }
+
+    function disableInputs() {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('fileInput').disabled = true;
+        document.getElementById('runtimeSelect').disabled = true;
+        document.getElementById('columnNamesInput').disabled = true;
+    }
+
+    function enableInputs() {
+        // List of elements to re-enable
+        const elements = [
+            document.getElementById('fileInput'),
+            document.getElementById('runtimeSelect'),
+            document.getElementById('columnNamesInput'),
+            document.getElementById('submitBtn')
+        ];
+
+        elements.forEach(element => {
+            setTimeout(() => {
+                element.disabled = false;
+            }, 100); // Delay re-enabling to ensure queued events are not executed
+        });
     }
 };

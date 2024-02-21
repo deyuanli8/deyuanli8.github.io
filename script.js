@@ -16,7 +16,13 @@ window.onload = () => {
 
     let pyodideReady = loadPyodideAndPackages();
 
+    let isProcessing = false;
     document.getElementById('submitBtn').addEventListener('click', async (event) => {
+        if (isProcessing) {
+            console.log("Processing is already in progress.");
+            return; // Early exit if a process is already running
+        }
+        isProcessing = true;
         event.preventDefault(); // Prevent the default form submission
         let fileInput = document.getElementById('fileInput');
         let runtimeSelect = document.getElementById('runtimeSelect');
@@ -26,8 +32,10 @@ window.onload = () => {
         let categoricalColumns = columnNamesInput.value ? columnNamesInput.value.split(',') : [];
 
         if (file && runtime) {
+            disableInputs()
+            document.getElementById('downloadLink').style.display = 'none';
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-            resetInputs()
+            // resetInputs()
             
             if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
                 let reader = new FileReader();
@@ -48,37 +56,41 @@ window.onload = () => {
                             pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', parseInt(runtime))
                                                        .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns))
                                                        .replace('PLACEHOLDER_FILENAME', fileName);
-                            let output = await pyodideInstance.runPythonAsync(pythonScript);
+                            let output = await pyodideInstance.runPython(pythonScript);
 
                             // Process the output as needed
                             processingMessage.style.display = 'none'; // Hide processing message
-                            createDownloadLink(output);
-
-                            // Reset inputs after processing
                             resetInputs();
+                            createDownloadLink(output, fileName);
+                            enableInputs();
+                            // Reset inputs after processing
+                            
                         })
-                        .catch(error => console.error('Failed to load Python script:', error));
+                        .catch(error => console.error('Failed to run Python script:', error));
                 };
                 reader.readAsArrayBuffer(file);
             } else {
                 alert('Please upload a CSV or Excel file.');
                 document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
                 resetInputs(); // Reset inputs even if file is not valid
+                enableInputs();
             }
         } else {
             alert('Please select a file and runtime.');
             document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
             resetInputs(); // Reset inputs even if conditions are not met
+            enableInputs();
         }
+        isProcessing = false;
     });
 
     // Function to create a downloadable link for the processed CSV data
-    function createDownloadLink(csvData) {
+    function createDownloadLink(csvData, processed_fileName) {
         const blob = new Blob([csvData], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const link = document.getElementById('downloadLink');
         link.href = url;
-        link.download = 'processed_file.csv';
+        link.download = 'processed_'+processed_fileName;
         link.style.display = 'block';
     }
 
@@ -87,5 +99,28 @@ window.onload = () => {
         document.getElementById('runtimeSelect').value = '';
         document.getElementById('columnNamesInput').value = '';
         // Additional UI adjustments if necessary
+    }
+
+    function disableInputs() {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('fileInput').disabled = true;
+        document.getElementById('runtimeSelect').disabled = true;
+        document.getElementById('columnNamesInput').disabled = true;
+    }
+
+    function enableInputs() {
+        // List of elements to re-enable
+        const elements = [
+            document.getElementById('fileInput'),
+            document.getElementById('runtimeSelect'),
+            document.getElementById('columnNamesInput'),
+            document.getElementById('submitBtn')
+        ];
+
+        elements.forEach(element => {
+            setTimeout(() => {
+                element.disabled = false;
+            }, 100); // Delay re-enabling to ensure queued events are not executed
+        });
     }
 };

@@ -70,7 +70,7 @@
         // if you plan to keep the script tag outside the DOMContentLoaded event listener.
         document.addEventListener('DOMContentLoaded', function () {
             const runtimeSelect = document.getElementById('runtimeSelect');
-            for (let i = 3; i <= 10; i++) {
+            for (let i = 0; i <= 10; i++) {
                 let option = document.createElement('option');
                 option.value = option.textContent = i;
                 runtimeSelect.appendChild(option);
@@ -83,13 +83,13 @@
     <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
     <div class="form-group">
         <select id="runtimeSelect">
-            <option value="">Select a runtime (mins)</option>
+            <option value="">Select Desired Runtime (mins)</option>
         </select>
         <textarea id="columnNamesInput" placeholder="Enter List of Names of Categorical Columns"></textarea>
     </div>
     <button id="submitBtn">Submit</button>
     <a id="downloadLink" style="display: none;">Download Processed File</a>
-    <div id="processingMessage">Processing... Do not refresh or close this page. This may take several minutes.</div>
-    <script src="script.js"></script>
+    <div id="processingMessage">Processing... Do not refresh or close this page. This will take several minutes.</div>
+    <script src="script_with_code.js"></script>
 </body>
 </html>
