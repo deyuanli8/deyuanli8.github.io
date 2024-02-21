@@ -27,7 +27,8 @@ window.onload = () => {
 
         if (file && runtime) {
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-
+            resetInputs()
+            
             if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
                 let reader = new FileReader();
                 reader.onload = async (e) => {
@@ -45,8 +46,8 @@ window.onload = () => {
                         .then(async (pythonScript) => {
                             // Inject runtime and categoricalColumns into the Python script
                             pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', parseInt(runtime))
-                                                       .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns)
-                                                       .replace('PLACEHOLDER_FILENAME', fileName));
+                                                       .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns))
+                                                       .replace('PLACEHOLDER_FILENAME', fileName);
                             let output = await pyodideInstance.runPythonAsync(pythonScript);
 
                             // Process the output as needed
@@ -66,14 +67,19 @@ window.onload = () => {
             }
         } else {
             alert('Please select a file and runtime.');
-            document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if conditions are not met
+            document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
             resetInputs(); // Reset inputs even if conditions are not met
         }
     });
 
     // Function to create a downloadable link for the processed CSV data
     function createDownloadLink(csvData) {
-        // Implementation remains the same
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.getElementById('downloadLink');
+        link.href = url;
+        link.download = 'processed_file.csv';
+        link.style.display = 'block';
     }
 
     function resetInputs() {
