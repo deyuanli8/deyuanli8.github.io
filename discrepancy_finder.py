@@ -10,17 +10,18 @@ print("HERE")
 # categorical_columns = []
 minutes = PLACEHOLDER_RUNTIME  # Runtime from the select dropdown
 categorical_columns = PLACEHOLDER_CATEGORICAL_COLUMNS  # Categorical columns from the textarea input
+fileName = "PLACEHOLDER_FILENAME"
 
 # Use minutes and categorical_columns in your Python code as needed
 print(f"Runtime: {minutes} minutes")
 print(f"Categorical Columns: {categorical_columns}")
 
 try:
-    if '${fileName}'.endswith('.csv'):
-        df = pd.read_csv('${fileName}')
+    if fileName.endswith('.csv'):
+        df = pd.read_csv(fileName)
     else:
         # Attempt to use openpyxl to read Excel file
-        df = pd.read_excel('${fileName}', engine='openpyxl')
+        df = pd.read_excel(fileName, engine='openpyxl')
 except Exception as e:
     raise Exception("Unable to process file. Please ensure it is a CSV or a supported Excel format.")
 print(df)

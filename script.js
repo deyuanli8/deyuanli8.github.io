@@ -44,8 +44,9 @@ window.onload = () => {
                         .then(response => response.text())
                         .then(async (pythonScript) => {
                             // Inject runtime and categoricalColumns into the Python script
-                            pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', runtime)
-                                                       .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns));
+                            pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', parseInt(runtime))
+                                                       .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns)
+                                                       .replace('PLACEHOLDER_FILENAME', fileName));
                             let output = await pyodideInstance.runPythonAsync(pythonScript);
 
                             // Process the output as needed
