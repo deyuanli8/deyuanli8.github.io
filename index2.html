@@ -22,22 +22,11 @@
         h1 {
             color: #27ae60;
         }
-        input[type="file"],
-        select,
-        textarea {
+        input[type="file"] {
             border: 2px solid #27ae60;
             padding: 10px;
-            margin: 10px 0;
+            margin: 20px 0;
             display: inline-block;
-        }
-        .form-group {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px; /* Ensure some spacing between form components */
-        }
-        .form-group * {
-            margin-bottom: 0; /* Avoid bottom margin to have controls closer vertically */
         }
         button {
             background-color: #27ae60;
@@ -46,7 +35,6 @@
             padding: 10px 20px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            margin-top: 20px; /* Added more vertical space between textarea and button */
         }
         button:hover {
             background-color: #2ecc71;
@@ -65,28 +53,10 @@
             margin-top: 10px;
         }
     </style>
-    <script>
-        // This script must be placed in the head or at the beginning of the document 
-        // if you plan to keep the script tag outside the DOMContentLoaded event listener.
-        document.addEventListener('DOMContentLoaded', function () {
-            const runtimeSelect = document.getElementById('runtimeSelect');
-            for (let i = 3; i <= 10; i++) {
-                let option = document.createElement('option');
-                option.value = option.textContent = i;
-                runtimeSelect.appendChild(option);
-            }
-        });
-    </script>
 </head>
 <body>
     <h1>Upload your CSV or Excel File</h1>
     <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-    <div class="form-group">
-        <select id="runtimeSelect">
-            <option value="">Select a runtime (mins)</option>
-        </select>
-        <textarea id="columnNamesInput" placeholder="Enter List of Names of Categorical Columns"></textarea>
-    </div>
     <button id="submitBtn">Submit</button>
     <a id="downloadLink" style="display: none;">Download Processed File</a>
     <div id="processingMessage">Processing... Do not refresh or close this page. This may take several minutes.</div>
