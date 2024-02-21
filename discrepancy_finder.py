@@ -15,6 +15,7 @@ fileName = "PLACEHOLDER_FILENAME"
 # Use minutes and categorical_columns in your Python code as needed
 print(f"Runtime: {minutes} minutes")
 print(f"Categorical Columns: {categorical_columns}")
+print(f"File Name: {fileName}")
 
 try:
     if fileName.endswith('.csv'):
