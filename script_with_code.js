@@ -32,8 +32,11 @@ window.onload = () => {
 
         if (file && runtime) {
             disableInputs();
+            console.log("HERE1");
             document.getElementById('downloadLink').style.display = 'none';
+            console.log("HERE2");
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
+            console.log("HERE3");
             // resetInputs()
             
             if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
