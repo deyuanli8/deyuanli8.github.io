@@ -67,6 +67,18 @@
             margin-top: 10px;
         }
     </style>
+    <script>
+        // This script must be placed in the head or at the beginning of the document 
+        // if you plan to keep the script tag outside the DOMContentLoaded event listener.
+        document.addEventListener('DOMContentLoaded', function () {
+            const runtimeSelect = document.getElementById('runtimeSelect');
+            for (let i = 0; i <= 10; i++) {
+                let option = document.createElement('option');
+                option.value = option.textContent = i;
+                runtimeSelect.appendChild(option);
+            }
+        });
+    </script>
 </head>
 <body>
     <div style="max-width: 800px; margin: 0; padding: 20px; text-align: left;">
