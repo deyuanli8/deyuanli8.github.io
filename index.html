@@ -88,9 +88,9 @@
             <li>Click 'Choose File' to upload your CSV or Excel file. Ensure that the first row in your CSV or Excel file contains the column names.</li>
             <li>Select the desired runtime from the dropdown menu. This will approximately be how long the discrepancy algorithm will run for in minutes.</li>
             <li>In the text area, enter the list of names of the categorical columns you wish to analyze. Enter the exact names (i.e., in the first row of the CSV or Excel file) corresponding to the columns containing categorical data. If there are multiple categorical columns, separate them by commas without spaces in between.</li>
-            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, a file will be available for download under the new column name "discrepancy split." Each entry will be either a 1 or a -1, representing the coloring used to distinguish between the two groups.</li>
+            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, a CSV file will be available for download, and the outputted coloring will be displayed under the new column name "discrepancy split."  Each entry will be either a 1 or a -1, representing the coloring used to distinguish between the two groups.</li>
         </ol>
-        The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group, after normalizing, is approximately equal. 
+        The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group is approximately equal. 
     </div>
     <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
     <div class="form-group">
