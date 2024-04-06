@@ -64,7 +64,7 @@ def is_numeric(col):
                 let nonNumericColumns = await pyodideInstance.runPython(pythonCode);
 
                 // Populate the runtime and column selection dropdowns
-                populateRuntimeSelect();
+                // populateRuntimeSelect();
                 populateColumnNamesSelect(columnNames, nonNumericColumns);
 
                 // Show the form container
