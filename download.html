@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Processed File</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1, p {
+            color: #27ae60;
+            text-align: center;
+        }
+        a, button {
+            background-color: #27ae60;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+        a:hover, button:hover {
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0; padding: 20px; text-align: left;">
+        <h1>Processed Results</h1>
+        <!-- <p>Summarization and Statistics:</p>
+        <ol>
+            <li>
+        </ol> -->
+        Click on the "Download Processed File" button to download a CSV file containing the discrepancy split. Click on "Restart" to go back and try again with a new file and/or new parameters.
+    </div>
+    <a id="downloadLink">Download Processed File</a>
+    <button id="restartBtn">Restart</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const downloadUrl = sessionStorage.getItem('downloadUrl');
+            const fileName = sessionStorage.getItem('fileName');
+            if (!downloadUrl || !fileName){
+                alert("There is no file loaded. Please restart and try again.");
+                sessionStorage.clear();
+                window.location.href = "index_updated.html";
+            }
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = downloadUrl;
+            downloadLink.download = fileName;
+
+            document.getElementById('restartBtn').addEventListener('click', function () {
+                sessionStorage.clear();
+                window.location.href = 'index_updated.html';
+            });
+        });
+    </script>
+</body>
+</html>

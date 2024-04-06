@@ -13,9 +13,70 @@ window.onload = () => {
         `);
         return pyodideInstance;
     }
-
+    
     let pyodideReady = loadPyodideAndPackages();
+    let fileName;
     let isProcessing = false;
+    document.getElementById('fileInput').addEventListener('change', async (event) => {
+        if (isProcessing) {
+            console.log("Processing is already in progress.");
+            return; // Early exit if a process is already running
+        }
+        isProcessing = true;
+        let fileInput = document.getElementById('fileInput');
+        let file = fileInput.files[0];
+
+        if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx'))) {
+            let reader = new FileReader();
+            reader.onload = async (e) => {
+                let arrayBuffer = e.target.result;
+                let data = new Uint8Array(arrayBuffer);
+
+                await pyodideReady;
+                fileName = file.name;
+                pyodideInstance.FS.writeFile(fileName, data);
+
+                // Load the file into pyodide as a pandas dataframe
+                let pythonCode = `
+import pandas as pd
+
+try:
+    if '${fileName}'.endswith('.csv'):
+        df = pd.read_csv('${fileName}')
+    else:
+        df = pd.read_excel('${fileName}', engine='openpyxl')
+except Exception as e:
+    raise Exception("Unable to process file. Please ensure it is a CSV or a supported Excel format.")
+
+df.columns.tolist()
+                `;
+                let columnNames = await pyodideInstance.runPython(pythonCode);
+
+                // Check which columns do not consist entirely of numerical values
+                pythonCode = `
+import numpy as np
+
+def is_numeric(col):
+    return np.issubdtype(df[col].dtype, np.number)
+
+[col for col in df.columns if not is_numeric(col)]
+                `;
+                let nonNumericColumns = await pyodideInstance.runPython(pythonCode);
+
+                // Populate the runtime and column selection dropdowns
+                populateRuntimeSelect();
+                populateColumnNamesSelect(columnNames, nonNumericColumns);
+
+                // Show the form container
+                document.getElementById('formContainer').style.display = 'block';
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            alert('Please upload a CSV or Excel file.');
+        }
+        isProcessing = false
+    });
+
     document.getElementById('submitBtn').addEventListener('click', async (event) => {
         if (isProcessing) {
             console.log("Processing is already in progress.");
@@ -23,41 +84,22 @@ window.onload = () => {
         }
         isProcessing = true;
         event.preventDefault(); // Prevent the default form submission
-        let fileInput = document.getElementById('fileInput');
-        let runtimeSelect = document.getElementById('runtimeSelect');
-        let columnNamesInput = document.getElementById('columnNamesInput');
-        let file = fileInput.files[0];
+
         let runtime = runtimeSelect.value;
-        let categoricalColumns = columnNamesInput.value ? columnNamesInput.value.split(',') : [];
+        let categoricalColumns = Array.from(columnNamesSelect.selectedOptions).map(option => option.value);
 
-        if (file && runtime) {
+        if (runtime) {
             disableInputs();
-            console.log("HERE1");
-            document.getElementById('downloadLink').style.display = 'none';
-            console.log("HERE2");
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-            console.log("HERE3");
+            // document.querySelector('.processing-message').style.display = 'block';
+            alert("HERE")
             // resetInputs()
-            
-            if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
-                let reader = new FileReader();
-                reader.onload = async (e) => {
-                    let arrayBuffer = e.target.result;
-                    let data = new Uint8Array(arrayBuffer);
-
-                    await pyodideReady;
-                    const fileName = file.name;
-                    pyodideInstance.FS.writeFile(fileName, data);
-
-                    // Prepare and run Python code using Pyodide
-                    let pythonCode = `
-import numpy as np
-import pandas as pd
+        
+            let pythonCode = `
 from scipy.linalg import qr, qr_update
 from sklearn.linear_model import LinearRegression
 
 import time
-print("HERE")
 
 # minutes = 1
 # categorical_columns = []
@@ -67,16 +109,6 @@ categorical_columns = ${JSON.stringify(categoricalColumns)}  # Categorical colum
 # Use minutes and categorical_columns in your Python code as needed
 print(f"Runtime: {minutes} minutes")
 print(f"Categorical Columns: {categorical_columns}")
-
-try:
-    if '${fileName}'.endswith('.csv'):
-        df = pd.read_csv('${fileName}')
-    else:
-        # Attempt to use openpyxl to read Excel file
-        df = pd.read_excel('${fileName}', engine='openpyxl')
-except Exception as e:
-    raise Exception("Unable to process file. Please ensure it is a CSV or a supported Excel format.")
-print(df)
 
 
 def compute_discrepancy(df, disp = False):
@@ -341,46 +373,62 @@ df_output = get_split(df, minutes, categorical_columns)
 
 output = df_output.to_csv(index=False)
 output
-                    `;
-                    let output = await pyodideInstance.runPython(pythonCode);
+            `;
+            let output = await pyodideInstance.runPython(pythonCode);
 
-                    // Handle the output
-                    document.getElementById('processingMessage').style.display = 'none'; // Hide the processing message
-                    resetInputs();
-                    createDownloadLink(output, fileName);
-                    enableInputs();
-                };
-                // Read the file as an ArrayBuffer for both CSV and Excel files
-                reader.readAsArrayBuffer(file);
-            } else {
-                alert('Please upload a CSV or Excel file.');
-                document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
-                resetInputs(); // Reset inputs even if file is not valid
-                enableInputs();
-            }
+            // Handle the output
+            // document.getElementById('processing-message').style.display = 'none'; // Hide the processing message
+            // resetInputs();
+            createDownloadLink(output, fileName);
+            // enableInputs();
         } else {
-            alert('Please select a file and runtime.');
-            document.getElementById('processingMessage').style.display = 'none'; // Hide processing message if file is invalid
-            resetInputs(); // Reset inputs even if conditions are not met
-            enableInputs();
+            alert('Please select a runtime.');
+            // resetInputs(); 
+            // enableInputs();
         }
         isProcessing = false;
     });
 
-    // Function to create a downloadable link for the processed CSV data
+    function populateRuntimeSelect() {
+        const runtimeSelect = document.getElementById('runtimeSelect');
+        for (let i = 0; i <= 10; i++) {
+            let option = document.createElement('option');
+            option.value = option.textContent = i;
+            runtimeSelect.appendChild(option);
+        }
+    }
+
+    function populateColumnNamesSelect(columnNames, nonNumericColumns) {
+        const columnNamesSelect = document.getElementById('columnNamesSelect');
+        columnNamesSelect.innerHTML = ''; // Clear existing options
+
+        columnNames.forEach(column => {
+            let option = document.createElement('option');
+            option.value = option.textContent = column;
+            option.selected = nonNumericColumns.includes(column);
+            columnNamesSelect.appendChild(option);
+        });
+    }
+
+    // function createDownloadLink(csvData, processed_fileName) {
+    //     const blob = new Blob([csvData], { type: 'text/csv' });
+    //     const url = URL.createObjectURL(blob);
+    //     sessionStorage.setItem('downloadUrl', url);
+    //     sessionStorage.setItem('fileName', 'processed_' + processed_fileName);
+    //     window.location.href = 'download.html';
+    // }
+
     function createDownloadLink(csvData, processed_fileName) {
-        const blob = new Blob([csvData], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.getElementById('downloadLink');
-        link.href = url;
-        link.download = 'processed_'+processed_fileName;
-        link.style.display = 'block';
+        const dataUrl = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData);
+        sessionStorage.setItem('downloadUrl', dataUrl);
+        sessionStorage.setItem('fileName', 'processed_' + processed_fileName);
+        window.location.href = 'download.html';
     }
 
     function resetInputs() {
         document.getElementById('fileInput').value = '';
         document.getElementById('runtimeSelect').value = '';
-        document.getElementById('columnNamesInput').value = '';
+        document.getElementById('columnNamesSelect').value = '';
         // Additional UI adjustments if necessary
     }
 
@@ -388,7 +436,7 @@ output
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('fileInput').disabled = true;
         document.getElementById('runtimeSelect').disabled = true;
-        document.getElementById('columnNamesInput').disabled = true;
+        document.getElementById('columnNamesSelect').disabled = true;
     }
 
     function enableInputs() {
@@ -396,7 +444,7 @@ output
         const elements = [
             document.getElementById('fileInput'),
             document.getElementById('runtimeSelect'),
-            document.getElementById('columnNamesInput'),
+            document.getElementById('columnNamesSelect'),
             document.getElementById('submitBtn')
         ];
 
