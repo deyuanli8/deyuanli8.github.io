@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discrepancy Finder</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js" integrity="sha512-8o1Tqf7Rp9G4d6stlEq3I1a7+EyK5b8JHmMl9Pbm5xKgHRtHA+sG5/NgXpzaYVka8NuyYtL7J9I493Utpj1+Iw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -32,14 +32,37 @@
             margin: 10px 0;
             display: inline-block;
         }
-        .form-group {
+        .btn-group {
+            width: 100%;
+        }
+        .dropdown-menu {
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dropdown-menu li {
+            padding: 2px 10px;
+        }
+        .dropdown-menu li:hover {
+            background-color: #f8f9fa;
+        }
+        .dropdown-item {
+            padding: 2px 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .negative-py-1 {
+            margin-top: -0.25rem; 
+            margin-bottom: -0.25rem;
+        }
+        .submit-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
-        }
-        .form-group * {
-            margin-bottom: 0;
         }
         button {
             background-color: #27ae60;
@@ -67,15 +90,24 @@
             margin-top: 10px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // This script must be placed in the head or at the beginning of the document 
-        // if you plan to keep the script tag outside the DOMContentLoaded event listener.
         document.addEventListener('DOMContentLoaded', function () {
             const runtimeSelect = document.getElementById('runtimeSelect');
+            const runtimeToggle = document.getElementById('runtimeToggle');
             for (let i = 0; i <= 10; i++) {
-                let option = document.createElement('option');
-                option.value = option.textContent = i;
-                runtimeSelect.appendChild(option);
+                const listItem = document.createElement('li');
+                const option = document.createElement('a');
+                option.classList.add('dropdown-item', 'negative-py-1');
+                option.href = '#';
+                option.textContent = i;
+                option.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    runtimeToggle.textContent = i;
+                    runtimeToggle.setAttribute('data-value', i);
+                });
+                listItem.appendChild(option);
+                runtimeSelect.appendChild(listItem);
             }
         });
     </script>
@@ -86,23 +118,42 @@
         <p>Welcome to the Discrepancy Finder Tool. Please follow the steps below to process your file:</p>
         <ol>
             <li>Click 'Choose File' to upload your CSV or Excel file. Ensure that the first row in your CSV or Excel file contains the column names.</li>
-            <li>Select the desired runtime from the dropdown menu. This will approximately be how long the discrepancy algorithm will run for in minutes.</li>
-            <li>In the text area, enter the list of names of the categorical columns you wish to analyze. Enter the exact names (i.e., in the first row of the CSV or Excel file) corresponding to the columns containing categorical data. If there are multiple categorical columns, separate them by commas without spaces in between.</li>
-            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, a CSV file will be available for download, and the outputted coloring will be displayed under the new column name "discrepancy split."  Each entry will be either a 1 or a -1, representing the coloring used to distinguish between the two groups.</li>
+            <li>After uploading the file, select the desired runtime from the dropdown menu. This will approximately be how long the discrepancy algorithm will run for in minutes.</li>
+            <li>In the column selection dropdown, select the columns that correspond to categorical variables. Columns that do not consist entirely of numerical values will be checked by default, but you can toggle them on and off.</li>
+            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted coloring will be displayed under the new column name "discrepancy split." Each entry will be either a 1 or a -1, representing the coloring used to distinguish between the two groups.</li>
         </ol>
-        The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group is approximately equal. 
-        This website is a work in progress created by Deyuan Li under the guidance of Professor Daniel Spielman.
+        <i>The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group is approximately equal. 
+            This website is a work in progress created by Deyuan Li under the guidance of Professor Daniel Spielman.</i>
     </div>
     <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-    <div class="form-group">
-        <select id="runtimeSelect">
-            <option value="">Select Desired Runtime (mins)</option>
-        </select>
-        <textarea id="columnNamesInput" placeholder="Enter List of Names of Categorical Columns"></textarea>
+    <div id="formContainer" style="display: none;">
+        <div class="row mb-3 align-items-center">
+            <div class="col">
+                <div class="dropdown">
+                    <button class="btn btn-outline-success dropdown-toggle" type="button" id="runtimeToggle" data-bs-toggle="dropdown" aria-expanded="false" data-value="">
+                        Select Desired Runtime (mins)
+                    </button>
+                    <ul id="runtimeSelect" class="dropdown-menu">
+                        <!-- Options will be dynamically populated here -->
+                    </ul>
+                </div>
+            </div>
+            <div class="col">
+                <div class="dropdown">
+                    <button class="btn btn-outline-success dropdown-toggle" type="button" id="columnNamesToggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        Select Categorical Columns
+                    </button>
+                    <ul id="columnNamesSelect" class="dropdown-menu">
+                        <!-- Options will be dynamically populated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <button id="submitBtn" class="btn btn-success">Submit</button>
+        </div>
     </div>
-    <button id="submitBtn">Submit</button>
-    <a id="downloadLink" style="display: none;">Download Processed File</a>
     <div id="processingMessage">Processing... Do not refresh or close this page. This will take several minutes.</div>  
-    <script src="script_with_code.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

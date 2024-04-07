@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <title>Download Processed File</title>
     <style>
         body {
@@ -21,7 +23,7 @@
             color: #27ae60;
             text-align: center;
         }
-        a, button {
+        .btn {
             background-color: #27ae60;
             color: #ffffff;
             border: none;
@@ -30,8 +32,9 @@
             transition: background-color 0.3s ease;
             margin-top: 20px;
             text-decoration: none;
+            border-radius: 5px;
         }
-        a:hover, button:hover {
+        .btn:hover {
             background-color: #2ecc71;
         }
     </style>
@@ -45,8 +48,8 @@
         </ol> -->
         Click on the "Download Processed File" button to download a CSV file containing the discrepancy split. Click on "Restart" to go back and try again with a new file and/or new parameters.
     </div>
-    <a id="downloadLink">Download Processed File</a>
-    <button id="restartBtn">Restart</button>
+    <a id="downloadLink" class="btn">Download Processed File</a>
+    <button id="restartBtn" class="btn">Restart</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -55,7 +58,7 @@
             if (!downloadUrl || !fileName){
                 alert("There is no file loaded. Please restart and try again.");
                 sessionStorage.clear();
-                window.location.href = "index_updated.html";
+                window.location.href = "index.html";
             }
             const downloadLink = document.getElementById('downloadLink');
             downloadLink.href = downloadUrl;
@@ -63,7 +66,7 @@
 
             document.getElementById('restartBtn').addEventListener('click', function () {
                 sessionStorage.clear();
-                window.location.href = 'index_updated.html';
+                window.location.href = 'index.html';
             });
         });
     </script>
