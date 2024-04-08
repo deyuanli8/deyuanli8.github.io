@@ -1,4 +1,25 @@
 let pyodideInstance = null;
+let initialRuntimeText = '';
+
+document.addEventListener('DOMContentLoaded', function () {
+    const runtimeSelect = document.getElementById('runtimeSelect');
+    const runtimeToggle = document.getElementById('runtimeToggle');
+    initialRuntimeText = runtimeToggle.textContent;
+    for (let i = 0; i <= 10; i++) {
+        const listItem = document.createElement('li');
+        const option = document.createElement('a');
+        option.classList.add('dropdown-item', 'negative-py-1');
+        option.href = '#';
+        option.textContent = `${i} min`;
+        option.addEventListener('click', function (event) {
+            event.preventDefault();
+            runtimeToggle.textContent = `${i} min`;
+            runtimeToggle.setAttribute('data-value', i);
+        });
+        listItem.appendChild(option);
+        runtimeSelect.appendChild(listItem);
+    }
+});
 
 window.onload = () => {
     // Load Pyodide and required packages
@@ -15,7 +36,7 @@ window.onload = () => {
     }
     
     let pyodideReady = loadPyodideAndPackages();
-    let fileName;
+    let fileName = '';
     let isProcessing = false;
     document.getElementById('fileInput').addEventListener('change', async (event) => {
         if (isProcessing) {
@@ -27,6 +48,7 @@ window.onload = () => {
         let file = fileInput.files[0];
 
         if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx'))) {
+            selectedFile = file;
             let reader = new FileReader();
             reader.onload = async (e) => {
                 let arrayBuffer = e.target.result;
@@ -65,6 +87,9 @@ def is_numeric(col):
 
                 // Populate the runtime and column selection dropdowns
                 // populateRuntimeSelect();
+                const runtimeToggle = document.getElementById('runtimeToggle');
+                runtimeToggle.textContent = initialRuntimeText;
+                runtimeToggle.setAttribute('data-value', '');
                 populateColumnNamesSelect(columnNames, nonNumericColumns);
 
                 // Show the form container
@@ -72,7 +97,14 @@ def is_numeric(col):
             };
             reader.readAsArrayBuffer(file);
         } else {
-            alert('Please upload a CSV or Excel file.');
+            if(file) {
+                alert('Please upload a CSV or Excel file.');
+                fileInput.value = ''; // Clear the file input
+                fileName = '';
+            }
+            else {
+                
+            }
         }
         isProcessing = false
     });
@@ -392,33 +424,30 @@ output
         isProcessing = false;
     });
 
-    // function populateRuntimeSelect() {
-    //     const runtimeSelect = document.getElementById('runtimeSelect');
-    //     for (let i = 0; i <= 10; i++) {
-    //         let option = document.createElement('option');
-    //         option.value = option.textContent = i;
-    //         runtimeSelect.appendChild(option);
-    //     }
-    // }
-
     // function populateColumnNamesSelect(columnNames, nonNumericColumns) {
     //     const columnNamesSelect = document.getElementById('columnNamesSelect');
     //     columnNamesSelect.innerHTML = ''; // Clear existing options
-    
+
     //     columnNames.forEach(column => {
     //         const listItem = document.createElement('li');
+    //         const option = document.createElement('a');
+    //         option.classList.add('dropdown-item', 'negative-py-1');
+    //         option.href = '#';
+
     //         const checkbox = document.createElement('input');
     //         checkbox.type = 'checkbox';
     //         checkbox.value = column;
-    //         checkbox.id = `column-${column}`;
     //         checkbox.checked = nonNumericColumns.includes(column);
-    
-    //         const label = document.createElement('label');
-    //         label.htmlFor = `column-${column}`;
-    //         label.appendChild(document.createTextNode(column));
-    
-    //         listItem.appendChild(checkbox);
-    //         listItem.appendChild(label);
+            
+    //         if (nonNumericColumns.includes(column)) {
+    //             checkbox.disabled = true;
+    //         }
+    //         const label = document.createElement('span');
+    //         label.textContent = column;
+
+    //         option.appendChild(checkbox);
+    //         option.appendChild(label);
+    //         listItem.appendChild(option);
     //         columnNamesSelect.appendChild(listItem);
     //     });
     // }
@@ -426,21 +455,38 @@ output
     function populateColumnNamesSelect(columnNames, nonNumericColumns) {
         const columnNamesSelect = document.getElementById('columnNamesSelect');
         columnNamesSelect.innerHTML = ''; // Clear existing options
-    
+        
         columnNames.forEach(column => {
             const listItem = document.createElement('li');
             const option = document.createElement('a');
             option.classList.add('dropdown-item', 'negative-py-1');
             option.href = '#';
-    
+        
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = column;
             checkbox.checked = nonNumericColumns.includes(column);
-    
+            
+            if (nonNumericColumns.includes(column)) {
+                checkbox.disabled = true; // Disable non-numeric columns
+            }
+        
             const label = document.createElement('span');
             label.textContent = column;
-    
+            
+            checkbox.addEventListener('click', function (event) {
+                event.stopPropagation(); // Prevent the click event from propagating to the option element
+            });
+
+            // Add click event listener to the option element
+            option.addEventListener('click', function (event) {
+                event.preventDefault(); // Prevent the default behavior of the anchor tag
+                event.stopPropagation(); // Prevent the click event from propagating to the dropdown
+                if (!checkbox.disabled) {
+                    checkbox.checked = !checkbox.checked; // Toggle the checkbox state if it's not disabled
+                }
+            });
+        
             option.appendChild(checkbox);
             option.appendChild(label);
             listItem.appendChild(option);
