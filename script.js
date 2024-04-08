@@ -411,19 +411,22 @@ df_output = get_split(df, minutes, categorical_columns)
 output = df_output.to_csv(index=False)
 output
             `;
-            let output = await pyodideInstance.runPython(pythonCode);
+            setTimeout(async () => {
+                let output = await pyodideInstance.runPython(pythonCode);
 
-            // Handle the output
-            // document.getElementById('processing-message').style.display = 'none'; // Hide the processing message
-            // resetInputs();
-            createDownloadLink(output, fileName);
+                // Handle the output
+                // document.getElementById('processing-message').style.display = 'none'; // Hide the processing message
+                // resetInputs();
+                createDownloadLink(output, fileName);
+                isProcessing = false;
+            }, 100); // Introduce a delay before running the Python code
             // enableInputs();
         } else {
             alert('Please select a runtime.');
+            isProcessing = false;
             // resetInputs(); 
             // enableInputs();
         }
-        isProcessing = false;
     });
 
     // function populateColumnNamesSelect(columnNames, nonNumericColumns) {
