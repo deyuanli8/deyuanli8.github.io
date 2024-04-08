@@ -54,6 +54,8 @@ window.onload = () => {
                 let arrayBuffer = e.target.result;
                 let data = new Uint8Array(arrayBuffer);
 
+                document.getElementById('loadingMessage').style.display = 'block'; // Show the loading message
+
                 await pyodideReady;
                 fileName = file.name;
                 pyodideInstance.FS.writeFile(fileName, data);
@@ -87,6 +89,8 @@ def is_numeric(col):
 
                 // Populate the runtime and column selection dropdowns
                 // populateRuntimeSelect();
+                
+                document.getElementById('loadingMessage').style.display = 'none'; // Hide the loading message
                 const runtimeToggle = document.getElementById('runtimeToggle');
                 runtimeToggle.textContent = initialRuntimeText;
                 runtimeToggle.setAttribute('data-value', '');
