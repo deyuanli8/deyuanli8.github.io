@@ -99,11 +99,13 @@ def is_numeric(col):
         } else {
             if(file) {
                 alert('Please upload a CSV or Excel file.');
-                fileInput.value = ''; // Clear the file input
                 fileName = '';
+                resetForm();
             }
             else {
-                
+                alert('Please choose a file to upload.');
+                fileName = '';
+                resetForm();
             }
         }
         isProcessing = false
@@ -513,6 +515,14 @@ output
         document.getElementById('fileInput').disabled = true;
         document.getElementById('runtimeSelect').disabled = true;
         document.getElementById('columnNamesSelect').disabled = true;
+    }
+
+    function resetForm() {
+        document.getElementById('fileInput').value = ''; // Clear the file input
+        document.getElementById('runtimeToggle').textContent = 'Select Desired Runtime (mins)'; // Reset the runtime dropdown text
+        document.getElementById('runtimeToggle').setAttribute('data-value', ''); // Reset the runtime dropdown data-value
+        document.getElementById('columnNamesSelect').innerHTML = ''; // Clear the column select options
+        document.getElementById('formContainer').style.display = 'none'; // Hide the form container
     }
 
     // function enableInputs() {
