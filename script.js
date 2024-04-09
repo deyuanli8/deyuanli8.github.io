@@ -48,12 +48,11 @@ window.onload = () => {
         let file = fileInput.files[0];
 
         if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx'))) {
-            selectedFile = file;
             let reader = new FileReader();
             reader.onload = async (e) => {
                 let arrayBuffer = e.target.result;
                 let data = new Uint8Array(arrayBuffer);
-
+                
                 document.getElementById('loadingMessage').style.display = 'block'; // Show the loading message
 
                 await pyodideReady;
@@ -75,7 +74,6 @@ except Exception as e:
 df.columns.tolist()
                 `;
                 let columnNames = await pyodideInstance.runPython(pythonCode);
-
                 // Check which columns do not consist entirely of numerical values
                 pythonCode = `
 import numpy as np
@@ -87,9 +85,7 @@ def is_numeric(col):
                 `;
                 let nonNumericColumns = await pyodideInstance.runPython(pythonCode);
 
-                // Populate the runtime and column selection dropdowns
-                // populateRuntimeSelect();
-                
+
                 document.getElementById('loadingMessage').style.display = 'none'; // Hide the loading message
                 const runtimeToggle = document.getElementById('runtimeToggle');
                 runtimeToggle.textContent = initialRuntimeText;
@@ -123,18 +119,12 @@ def is_numeric(col):
         isProcessing = true;
         event.preventDefault(); // Prevent the default form submission
 
-        // let runtime = runtimeSelect.value;
-        // let runtime = document.getElementById('runtimeToggle').textContent;
         let runtime = document.getElementById('runtimeToggle').getAttribute('data-value');
         let categoricalColumns = Array.from(columnNamesSelect.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-        // let categoricalColumns = Array.from(columnNamesSelect.selectedOptions).map(option => option.value);
 
         if (runtime) {
             disableInputs();
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-            // document.querySelector('.processing-message').style.display = 'block';
-            // alert("HERE")
-            // resetInputs()
         
             let pythonCode = `
 from scipy.linalg import qr, qr_update
@@ -419,47 +409,14 @@ output
                 let output = await pyodideInstance.runPython(pythonCode);
 
                 // Handle the output
-                // document.getElementById('processing-message').style.display = 'none'; // Hide the processing message
-                // resetInputs();
                 createDownloadLink(output, fileName);
                 isProcessing = false;
             }, 100); // Introduce a delay before running the Python code
-            // enableInputs();
         } else {
             alert('Please select a runtime.');
             isProcessing = false;
-            // resetInputs(); 
-            // enableInputs();
         }
     });
-
-    // function populateColumnNamesSelect(columnNames, nonNumericColumns) {
-    //     const columnNamesSelect = document.getElementById('columnNamesSelect');
-    //     columnNamesSelect.innerHTML = ''; // Clear existing options
-
-    //     columnNames.forEach(column => {
-    //         const listItem = document.createElement('li');
-    //         const option = document.createElement('a');
-    //         option.classList.add('dropdown-item', 'negative-py-1');
-    //         option.href = '#';
-
-    //         const checkbox = document.createElement('input');
-    //         checkbox.type = 'checkbox';
-    //         checkbox.value = column;
-    //         checkbox.checked = nonNumericColumns.includes(column);
-            
-    //         if (nonNumericColumns.includes(column)) {
-    //             checkbox.disabled = true;
-    //         }
-    //         const label = document.createElement('span');
-    //         label.textContent = column;
-
-    //         option.appendChild(checkbox);
-    //         option.appendChild(label);
-    //         listItem.appendChild(option);
-    //         columnNamesSelect.appendChild(listItem);
-    //     });
-    // }
 
     function populateColumnNamesSelect(columnNames, nonNumericColumns) {
         const columnNamesSelect = document.getElementById('columnNamesSelect');
@@ -510,13 +467,6 @@ output
         window.location.href = 'download.html';
     }
 
-    // function resetInputs() {
-    //     document.getElementById('fileInput').value = '';
-    //     document.getElementById('runtimeSelect').value = '';
-    //     document.getElementById('columnNamesSelect').value = '';
-    //     // Additional UI adjustments if necessary
-    // }
-
     function disableInputs() {
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('fileInput').disabled = true;
@@ -531,20 +481,4 @@ output
         document.getElementById('columnNamesSelect').innerHTML = ''; // Clear the column select options
         document.getElementById('formContainer').style.display = 'none'; // Hide the form container
     }
-
-    // function enableInputs() {
-    //     // List of elements to re-enable
-    //     const elements = [
-    //         document.getElementById('fileInput'),
-    //         document.getElementById('runtimeSelect'),
-    //         document.getElementById('columnNamesSelect'),
-    //         document.getElementById('submitBtn')
-    //     ];
-
-    //     elements.forEach(element => {
-    //         setTimeout(() => {
-    //             element.disabled = false;
-    //         }, 100); // Delay re-enabling to ensure queued events are not executed
-    //     });
-    // }
 };
