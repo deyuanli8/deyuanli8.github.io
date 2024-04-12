@@ -396,7 +396,8 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None):
             max_soft = int(np.log(1e307 / m)/(best_discrepancy+2))
             max_local = int(np.log(1e307 / m)/np.log(best_discrepancy+2))
     print("Final Discrepancy:", best_discrepancy)
-    df['discrepancy split'] = df_best['x']
+    # df['discrepancy split'] = df_best['x']
+    df['Group'] = np.where(df_best['x'] > 0, 'A', 'B')
     return df
 
 df_output = get_split(df, minutes, categorical_columns)
