@@ -1,6 +1,5 @@
 let pyodideInstance = null;
 let initialRuntimeText = '';
-let selectedCategoricalColumns = [];
 
 document.addEventListener('DOMContentLoaded', function () {
     const runtimeSelect = document.getElementById('runtimeSelect');
@@ -91,11 +90,7 @@ def is_numeric(col):
                 const runtimeToggle = document.getElementById('runtimeToggle');
                 runtimeToggle.textContent = initialRuntimeText;
                 runtimeToggle.setAttribute('data-value', '');
-                selectedCategoricalColumns = nonNumericColumns.slice();
-
-                document.getElementById('normalizeToggle').checked = true;
-                populateCategoricalColumnSelect(columnNames, nonNumericColumns, nonNumericColumns);
-                populateColumnSelectDropdown(columnNames, nonNumericColumns)
+                populateColumnNamesSelect(columnNames, nonNumericColumns);
 
                 // Show the form container
                 document.getElementById('formContainer').style.display = 'block';
@@ -125,11 +120,9 @@ def is_numeric(col):
         event.preventDefault(); // Prevent the default form submission
 
         let runtime = document.getElementById('runtimeToggle').getAttribute('data-value');
-        let categoricalColumns = Array.from(categoricalColumnSelect.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-        let includedColumns = Array.from(columnSelectDropdown.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-        let normalizeData = document.getElementById('normalizeToggle').checked;
+        let categoricalColumns = Array.from(columnNamesSelect.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
-        if (runtime && includedColumns.length > 0) {
+        if (runtime) {
             disableInputs();
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
         
@@ -139,10 +132,10 @@ from sklearn.linear_model import LinearRegression
 
 import time
 
+# minutes = 1
+# categorical_columns = []
 minutes = ${parseInt(runtime)}  # Runtime from the select dropdown
 categorical_columns = ${JSON.stringify(categoricalColumns)}  # Categorical columns from the textarea input
-included_columns = ${JSON.stringify(includedColumns)} # Columns to be included in discrepancy calculation
-normalize = ${normalizeData ? 'True' : 'False'} # Whether we should normalize data
 
 # Use minutes and categorical_columns in your Python code as needed
 print(f"Runtime: {minutes} minutes")
@@ -355,7 +348,7 @@ def solve_reduced_soft(df_vecs, t = 10):
 def normalize_data(df_vecs):
     return df_vecs.apply(lambda col: np.ones(len(col)) if col.nunique() == 1 and col.iloc[0] != 0 else np.zeros(len(col)) if col.nunique() == 1 else (2*(col - col.min())/(col.max() - col.min()) - 1), axis=0)
 
-def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns = None, normalize = True):
+def get_split(df_vecs, minutes = 5, categorical_columns = None):
     def find_best(df_current, current_discrepancy, df_new):
         new_discrepancy = compute_discrepancy(df_new, disp = False)
         if current_discrepancy <= new_discrepancy:
@@ -364,24 +357,16 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
         return (df_new, new_discrepancy)
     start_time = time.time()
     df = df_vecs.copy()
-
-    if included_columns is None:
-        included_columns = df.columns
-    if not set(included_columns).issubset(set(df.columns)):
-        print("Error: Inputted list of included columns are not part of dataframe.")
-        return None 
     if categorical_columns is not None:
-        if not set(categorical_columns).issubset(set(included_columns)):
-            print("Error: Inputted list of categorical columns are not part of included columns.")
-            return None
-
-    df_encoded = pd.get_dummies(df[included_columns], columns=categorical_columns).astype(float)
+        if not set(categorical_columns).issubset(set(df.columns)):
+            print("Error: Inputted list of categorical columns are not part of dataframe.")
+            raise Exception("Please ensure all inputted categorical column are column names in the uploaded Excel or CSV file.")
+    df_encoded = pd.get_dummies(df, columns=categorical_columns).astype(float)
     df_encoded.columns = [f'Characteristic_{i}' for i in range(len(df_encoded.columns))]
     m = len(df_encoded.columns)
-    if normalize:
-        df_reduced = faster_reduction(normalize_data(df_encoded))
-    else:
-        df_reduced = faster_reduction(df_encoded)
+    df_normalized = normalize_data(df_encoded)
+    df_reduced = faster_reduction(df_normalized)
+
 
     df_best = local_search(df_reduced, 4, cols = df_reduced[abs(df_reduced['x'])!=1].index)
     best_discrepancy = compute_discrepancy(df_best, disp = False)
@@ -411,11 +396,11 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
             max_soft = int(np.log(1e307 / m)/(best_discrepancy+2))
             max_local = int(np.log(1e307 / m)/np.log(best_discrepancy+2))
     print("Final Discrepancy:", best_discrepancy)
-
+    # df['discrepancy split'] = df_best['x']
     df['Group'] = np.where(df_best['x'] > 0, 'A', 'B')
     return df
 
-df_output = get_split(df, minutes, categorical_columns, included_columns, normalize)
+df_output = get_split(df, minutes, categorical_columns)
 
 
 output = df_output.to_csv(index=False)
@@ -429,49 +414,35 @@ output
                 isProcessing = false;
             }, 100); // Introduce a delay before running the Python code
         } else {
-            if(!runtime){
-                alert('Please select a runtime.');
-            }
-            else{
-                alert('Please select at least one column to include in the discrepancy calculation.');
-            }
+            alert('Please select a runtime.');
             isProcessing = false;
         }
     });
 
-
-    function populateCategoricalColumnSelect(selectedColumns, categoricalColumns, nonNumericColumns) {
-        const categoricalColumnSelect = document.getElementById('categoricalColumnSelect');
-        categoricalColumnSelect.innerHTML = ''; // Clear existing options
+    function populateColumnNamesSelect(columnNames, nonNumericColumns) {
+        const columnNamesSelect = document.getElementById('columnNamesSelect');
+        columnNamesSelect.innerHTML = ''; // Clear existing options
         
-        selectedColumns.forEach(column => {
+        columnNames.forEach(column => {
             const listItem = document.createElement('li');
             const option = document.createElement('a');
             option.classList.add('dropdown-item', 'negative-py-1');
             option.href = '#';
-            
+        
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = column;
-            checkbox.checked = categoricalColumns.includes(column);
+            checkbox.checked = nonNumericColumns.includes(column);
             
             if (nonNumericColumns.includes(column)) {
                 checkbox.disabled = true; // Disable non-numeric columns
             }
-            
+        
             const label = document.createElement('span');
             label.textContent = column;
-
+            
             checkbox.addEventListener('click', function (event) {
                 event.stopPropagation(); // Prevent the click event from propagating to the option element
-                if (checkbox.checked) {
-                    selectedCategoricalColumns.push(column);
-                } else {
-                    const index = selectedCategoricalColumns.indexOf(column);
-                    if (index > -1) {
-                        selectedCategoricalColumns.splice(index, 1);
-                    }
-                }
             });
 
             // Add click event listener to the option element
@@ -480,69 +451,13 @@ output
                 event.stopPropagation(); // Prevent the click event from propagating to the dropdown
                 if (!checkbox.disabled) {
                     checkbox.checked = !checkbox.checked; // Toggle the checkbox state if it's not disabled
-                    if (checkbox.checked) {
-                        selectedCategoricalColumns.push(column);
-                    } else {
-                        const index = selectedCategoricalColumns.indexOf(column);
-                        if (index > -1) {
-                            selectedCategoricalColumns.splice(index, 1);
-                        }
-                    }
                 }
             });
         
             option.appendChild(checkbox);
             option.appendChild(label);
             listItem.appendChild(option);
-            categoricalColumnSelect.appendChild(listItem);
-        });
-    }
-
-
-    function updateCategoricalColumns(nonNumericColumns) {
-        const columnSelectDropdown = document.getElementById('columnSelectDropdown');
-        const selectedColumns = Array.from(columnSelectDropdown.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-        
-        const categoricalColumns = selectedColumns.filter(column => selectedCategoricalColumns.includes(column));
-        populateCategoricalColumnSelect(selectedColumns, categoricalColumns, nonNumericColumns);
-    }
-
-
-    function populateColumnSelectDropdown(columnNames, nonNumericColumns) {
-        const columnSelectDropdown = document.getElementById('columnSelectDropdown');
-        columnSelectDropdown.innerHTML = ''; // Clear existing options
-        
-        columnNames.forEach(column => {
-            const listItem = document.createElement('li');
-            const option = document.createElement('a');
-            option.classList.add('dropdown-item', 'negative-py-1');
-            option.href = '#';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = column;
-            checkbox.checked = true; // Initially include all columns
-            
-            const label = document.createElement('span');
-            label.textContent = column;
-            
-            checkbox.addEventListener('click', function (event) {
-                event.stopPropagation(); // Prevent the click event from propagating to the option element
-                updateCategoricalColumns(nonNumericColumns);
-            });
-            
-            // Add click event listener to the option element
-            option.addEventListener('click', function (event) {
-                event.preventDefault(); // Prevent the default behavior of the anchor tag
-                event.stopPropagation(); // Prevent the click event from propagating to the dropdown
-                checkbox.checked = !checkbox.checked; // Toggle the checkbox state
-                updateCategoricalColumns(nonNumericColumns);
-            });
-            
-            option.appendChild(checkbox);
-            option.appendChild(label);
-            listItem.appendChild(option);
-            columnSelectDropdown.appendChild(listItem);
+            columnNamesSelect.appendChild(listItem);
         });
     }
 
@@ -557,18 +472,14 @@ output
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('fileInput').disabled = true;
         document.getElementById('runtimeSelect').disabled = true;
-        document.getElementById('categoricalColumnSelect').disabled = true;
-        document.getElementById('columnSelectDropdown').disabled = true; // Clear the column select options
-        document.getElementById('normalizeToggle').disabled = true;
+        document.getElementById('columnNamesSelect').disabled = true;
     }
 
     function resetForm() {
         document.getElementById('fileInput').value = ''; // Clear the file input
         document.getElementById('runtimeToggle').textContent = 'Select Desired Runtime (mins)'; // Reset the runtime dropdown text
         document.getElementById('runtimeToggle').setAttribute('data-value', ''); // Reset the runtime dropdown data-value
-        document.getElementById('categoricalColumnSelect').innerHTML = ''; // Clear the column select options
-        document.getElementById('columnSelectDropdown').innerHTML = ''; // Clear the column select options
-        document.getElementById('normalizeToggle').checked = true;
+        document.getElementById('columnNamesSelect').innerHTML = ''; // Clear the column select options
         document.getElementById('formContainer').style.display = 'none'; // Hide the form container
     }
 };
