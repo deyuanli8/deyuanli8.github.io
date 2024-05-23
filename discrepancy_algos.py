@@ -9,11 +9,6 @@ included_columns = PLACEHOLDER_INCLUDED_COLUMNS # Columns to be included in disc
 categorical_columns = PLACEHOLDER_CATEGORICAL_COLUMNS  # Categorical columns from the textarea input
 normalize = PLACEHOLDER_NORMALIZE # Whether we should normalize data
 
-# Use minutes and categorical_columns in your Python code as needed
-print(f"Runtime: {minutes} minutes")
-print(f"Categorical Columns: {categorical_columns}")
-
-
 def compute_discrepancy(df, disp = False):
     characteristics = [col for col in df.columns if 'Characteristic' in col]
     m = len(characteristics)
@@ -226,7 +221,7 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
         new_discrepancy = compute_discrepancy(df_new, disp = False)
         if current_discrepancy <= new_discrepancy:
             return (df_current, current_discrepancy)
-        print("Better Discrepancy Found:", new_discrepancy)
+        # print("Better Discrepancy Found:", new_discrepancy)
         times.append((time.time() - start_time)/60)
         discrepancy_values.append(new_discrepancy)
         return (df_new, new_discrepancy)
@@ -255,7 +250,7 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
 
     df_best = local_search(df_reduced, 4, cols = df_reduced[abs(df_reduced['x'])!=1].index)
     best_discrepancy = compute_discrepancy(df_best, disp = False)
-    print("Starting Discrepancy:", best_discrepancy)
+    # print("Starting Discrepancy:", best_discrepancy)
     times.append((time.time() - start_time)/60)
     discrepancy_values.append(best_discrepancy)
 
@@ -285,7 +280,7 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
             max_local = int(np.log(1e307 / m)/np.log(best_discrepancy+2))
     times.append((time.time() - start_time)/60)
     discrepancy_values.append(best_discrepancy)
-    print("Final Discrepancy:", best_discrepancy)
+    # print("Final Discrepancy:", best_discrepancy)
 
     df['Group'] = np.where(df_best['x'] > 0, 'A', 'B')
     return df, times, discrepancy_values
