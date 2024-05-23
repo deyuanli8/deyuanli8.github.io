@@ -143,7 +143,7 @@ def is_numeric(col):
                                                 .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns))
                                                 .replace('PLACEHOLDER_INCLUDED_COLUMNS', JSON.stringify(includedColumns))
                                                 .replace('PLACEHOLDER_NORMALIZE', normalizeData ? 'True' : 'False');
-                        let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonCodeCalculateDiscrepancy);
+                        let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
                         sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
                         sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
                         // Handle the output
