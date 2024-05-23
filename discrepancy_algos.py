@@ -4,11 +4,6 @@ from sklearn.linear_model import LinearRegression
 
 import time
 
-# minutes = ${parseInt(runtime)}  # Runtime from the select dropdown
-# categorical_columns = ${JSON.stringify(categoricalColumns)}  # Categorical columns from the textarea input
-# included_columns = ${JSON.stringify(includedColumns)} # Columns to be included in discrepancy calculation
-# normalize = ${normalizeData ? 'True' : 'False'} # Whether we should normalize data
-
 minutes = PLACEHOLDER_RUNTIME  # Runtime from the select dropdown
 included_columns = PLACEHOLDER_INCLUDED_COLUMNS # Columns to be included in discrepancy calculation
 categorical_columns = PLACEHOLDER_CATEGORICAL_COLUMNS  # Categorical columns from the textarea input
