@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discrepancy Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1, p {
+            color: #27ae60;
+            text-align: center;
+        }
+        input[type="file"],
+        select,
+        textarea {
+            border: 2px solid #27ae60;
+            padding: 10px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+        /* .btn-group {
+            width: 100%;
+        } */
+        .dropdown-menu {
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dropdown-menu li {
+            padding: 2px 10px;
+        }
+        .dropdown-menu li:hover {
+            background-color: #f8f9fa;
+        }
+        .dropdown-item {
+            padding: 2px 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .negative-py-1 {
+            margin-top: -0.25rem; 
+            margin-bottom: -0.25rem;
+        }
+        .submit-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        button {
+            background-color: #27ae60;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #2ecc71;
+        }
+        a {
+            color: #27ae60;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .message {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .loading-message {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .processing-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .form-switch .form-check-input {
+            height: 1.5em;
+            width: calc(2.5em + 0.75rem);
+            margin-right: 0.5rem;
+        }
+        .form-switch .form-check-label {
+            margin-left: 0.5rem;
+        }
+        .align-items-center {
+            align-items: center !important;
+        }
+        .dropdown-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .dropdown-container .dropdown {
+            flex: 1;
+        }
+        .dropdown-container .form-check {
+            margin-bottom: 0;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0; padding: 20px; text-align: left;">
+        <h1>Discrepancy Finder Tool</h1>
+        <p>Welcome to the Discrepancy Finder Tool. Please follow the steps below to process your file:</p>
+        <ol>
+            <li>Click 'Choose File' to upload your CSV or Excel file. Ensure that the first row in your CSV or Excel file contains the column names.</li>
+            <li>After uploading the file, select the desired runtime from the dropdown menu. This will approximately be how long the discrepancy algorithm will run for in minutes.</li>
+            <li>In the column selection dropdown, select the columns that correspond to categorical variables. Columns that do not consist entirely of numerical values will be checked by default and cannot be unchecked. However, other columns can be toggled on and off.</li>
+            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted coloring will be displayed under the new column name "Group." Each entry will be either a "A" or a "B", representing the coloring used to distinguish between the two groups.</li>
+        </ol>
+        <i>The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group is approximately equal. 
+            This website is a work in progress created by Deyuan Li under the guidance of Professor Daniel Spielman.</i>
+    </div>
+    <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+    <div id="formContainer" style="display: none;">
+        <div class="dropdown-container mb-3 justify-content-center">
+            <div class="dropdown">
+                <button class="btn btn-outline-success dropdown-toggle" type="button" id="runtimeToggle" data-bs-toggle="dropdown" aria-expanded="false" data-value="">
+                    Select Desired Runtime (min)
+                </button>
+                <ul id="runtimeSelect" class="dropdown-menu">
+                    <!-- Options will be dynamically populated here -->
+                </ul>
+            </div>
+            <div class="form-check form-switch align-items-center">
+                <input class="form-check-input" type="checkbox" id="normalizeToggle" checked>
+                <label class="form-check-label" for="normalizeToggle">Normalize Data</label>
+            </div>
+        </div>
+        <div class="dropdown-container mb-3">
+            <div class="dropdown">
+                <button class="btn btn-outline-success dropdown-toggle" type="button" id="columnNamesToggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Columns to Include
+                </button>
+                <ul id="columnSelectDropdown" class="dropdown-menu">
+                    <!-- Options will be dynamically populated here -->
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-success dropdown-toggle" type="button" id="columnNamesToggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Categorical Columns
+                </button>
+                <ul id="categoricalColumnSelect" class="dropdown-menu">
+                    <!-- Options will be dynamically populated here -->
+                </ul>
+            </div>
+        </div>
+        <div class="text-center">
+            <button id="submitBtn" class="btn btn-success">Submit</button>
+        </div>
+    </div>
+    <div id="loadingMessage" class="message loading-message" style="display: none;">Loading file. Do not refresh or close this page.</div>
+    <div id="processingMessage" class="message processing-message" style="display: none;">Processing... Do not refresh or close this page. This will take several minutes.</div>
+    <script src="script.js"></script>
+</body>
+</html>

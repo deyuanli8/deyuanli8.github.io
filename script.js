@@ -61,7 +61,7 @@ window.onload = () => {
                 pyodideInstance.FS.writeFile(fileName, data);
 
                 // Load the file into pyodide as a pandas dataframe
-                let pythonCode = `
+                let pythonCodeLoadDf = `
 import pandas as pd
 
 try:
@@ -74,9 +74,9 @@ except Exception as e:
 
 df.columns.tolist()
                 `;
-                let columnNames = await pyodideInstance.runPython(pythonCode);
+                let columnNames = await pyodideInstance.runPython(pythonCodeLoadDf);
                 // Check which columns do not consist entirely of numerical values
-                pythonCode = `
+                let pythonCodeFindCategorical = `
 import numpy as np
 
 def is_numeric(col):
@@ -84,7 +84,7 @@ def is_numeric(col):
 
 [col for col in df.columns if not is_numeric(col)]
                 `;
-                let nonNumericColumns = await pyodideInstance.runPython(pythonCode);
+                let nonNumericColumns = await pyodideInstance.runPython(pythonCodeFindCategorical);
 
 
                 document.getElementById('loadingMessage').style.display = 'none'; // Hide the loading message
@@ -133,7 +133,7 @@ def is_numeric(col):
             disableInputs();
             document.getElementById('processingMessage').style.display = 'block'; // Show processing message
         
-            let pythonCode = `
+            let pythonCodeCalculateDiscrepancy = `
 from scipy.linalg import qr, qr_update
 from sklearn.linear_model import LinearRegression
 
@@ -422,7 +422,7 @@ output = df_output.to_csv(index=False)
 output
             `;
             setTimeout(async () => {
-                let output = await pyodideInstance.runPython(pythonCode);
+                let output = await pyodideInstance.runPython(pythonCodeCalculateDiscrepancy);
 
                 // Handle the output
                 createDownloadLink(output, fileName);

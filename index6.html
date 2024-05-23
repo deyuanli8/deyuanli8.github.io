@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -19,9 +18,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow-y: auto;
+            height: 100vh;
         }
-        h1{
+        h1, p {
             color: #27ae60;
             text-align: center;
         }
@@ -72,8 +71,7 @@
             padding: 10px 20px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            /* margin-top: 5px;
-            margin-bottom: 5px */
+            margin-top: 20px;
         }
         button:hover {
             background-color: #2ecc71;
@@ -105,45 +103,26 @@
             color: #155724;
             border: 1px solid #c3e6cb;
         }
-        .first-row {
-            justify-content: center;
-        }
-        #fileInput {
-            margin: 15px 0;
-        }
-        #normalizeToggle {
-            margin-top: 2px;
-            width: 45px;
-            height: 21px;
-            margin-right: 1em;
-        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <div style="max-width: 900px; margin: 0; padding: 20px; text-align: left;">
+    <div style="max-width: 800px; margin: 0; padding: 20px; text-align: left;">
         <h1>Discrepancy Finder Tool</h1>
-        <!-- <p style="text-align: center; color: #27ae60;">Welcome to the Discrepancy Finder Tool. Please follow the steps below to process your file:</p> -->
-        <p> Suppose you have several characteristics (e.g. age, height, weight) and you wish to split a set of people into two groups, Group A and Group B. 
-            The goal of this website is find such a split so that for each characteristic, the sum of the values of the characteristic in Group A is as close as possible to the corresponding sum in Group B.
-            Given a spreadsheet where each row corresponds to a person and columns correspond to characteristics, this website will find a good split. To get started, please follow the steps below:
-        </p>
+        <p>Welcome to the Discrepancy Finder Tool. Please follow the steps below to process your file:</p>
         <ol>
-            <li>Click "Choose File" to upload your CSV or Excel file. Ensure that the first row in your CSV or Excel file contains the column names, and that your desired characteristics are represented by the columns.</li>
+            <li>Click 'Choose File' to upload your CSV or Excel file. Ensure that the first row in your CSV or Excel file contains the column names.</li>
             <li>After uploading the file, select the desired runtime from the dropdown menu. This will approximately be how long the discrepancy algorithm will run for in minutes.</li>
-            <li>Decide whether you want to normalize each of the columns. When normalization is applied, the values in each column will be rescaled to have minimum value -1 and maximum value 1, which treats each of the chosen characteristics with more equal weight.</li>
-            <li>In the first column selection dropdown, choose the columns that you wish to be considered as characteristics in the discrepancy calculation.</li>
-            <li>In the second column selection dropdown, identify the columns that correspond to categorical variables. Columns that do not consist entirely of numerical values will be checked by default and cannot be unchecked.</li>
-            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted split will be displayed under the new column name "Group", where each row will be assigned to either Group A or Group B</li>
+            <li>In the column selection dropdown, select the columns that correspond to categorical variables. Columns that do not consist entirely of numerical values will be checked by default and cannot be unchecked. However, other columns can be toggled on and off.</li>
+            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted coloring will be displayed under the new column name "Group." Each entry will be either a "A" or a "B", representing the coloring used to distinguish between the two groups.</li>
         </ol>
-        <footer style="text-align: center; margin-top: 20px;">
-            <i>This website was created by Deyuan Li under the guidance of Professor Daniel Spielman. For more detailed and technical information on how the website works, click <a href="https://github.com/deyuanli8/deyuanli8.github.io">here</a>. </i>
-        </footer>
+        <i>The discrepancy algorithm will attempt to find a coloring such that the sum of each characteristic's values in each group is approximately equal. 
+            This website is a work in progress created by Deyuan Li under the guidance of Professor Daniel Spielman.</i>
     </div>
     <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
     <div id="formContainer" style="display: none;">
-        <div class="row mb-3 align-items-center first-row">
-            <div class="col d-flex justify-content-center">
+        <div class="row mb-3 align-items-center">
+            <div class="col">
                 <div class="dropdown">
                     <button class="btn btn-outline-success dropdown-toggle" type="button" id="runtimeToggle" data-bs-toggle="dropdown" aria-expanded="false" data-value="">
                         Select Desired Runtime (min)
@@ -153,13 +132,13 @@
                     </ul>
                 </div>
             </div>
-            <div class="col d-flex justify-content-center">
+            <div class="col">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="normalizeToggle" checked>
                     <label class="form-check-label" for="normalizeToggle">Normalize Data</label>
                 </div>
             </div>
-        </div> 
+        </div>
         <div class="row mb-3 align-items-center">
             <div class="col">
                 <div class="dropdown">
