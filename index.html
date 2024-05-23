@@ -72,8 +72,6 @@
             padding: 10px 20px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            /* margin-top: 5px;
-            margin-bottom: 5px */
         }
         button:hover {
             background-color: #2ecc71;
@@ -121,11 +119,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <div style="max-width: 900px; margin: 0; padding: 20px; text-align: left;">
+    <div style="max-width: 850px; margin: 0; padding: 20px; text-align: left;">
         <h1>Discrepancy Finder Tool</h1>
-        <!-- <p style="text-align: center; color: #27ae60;">Welcome to the Discrepancy Finder Tool. Please follow the steps below to process your file:</p> -->
         <p> Suppose you have several characteristics (e.g. age, height, weight) and you wish to split a set of people into two groups, Group A and Group B. 
-            The goal of this website is find such a split so that for each characteristic, the sum of the values of the characteristic in Group A is as close as possible to the corresponding sum in Group B.
+            This website aims to find such a split so that for each characteristic, the sum of the values of the characteristic in Group A is as close as possible to the corresponding sum in Group B.
             Given a spreadsheet where each row corresponds to a person and columns correspond to characteristics, this website will find a good split. To get started, please follow the steps below:
         </p>
         <ol>
@@ -134,7 +131,7 @@
             <li>Decide whether you want to normalize each of the columns. When normalization is applied, the values in each column will be rescaled to have minimum value -1 and maximum value 1, which treats each of the chosen characteristics with more equal weight.</li>
             <li>In the first column selection dropdown, choose the columns that you wish to be considered as characteristics in the discrepancy calculation.</li>
             <li>In the second column selection dropdown, identify the columns that correspond to categorical variables. Columns that do not consist entirely of numerical values will be checked by default and cannot be unchecked.</li>
-            <li>Click 'Submit' to process your file. Please be patient as this may take some time. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted split will be displayed under the new column name "Group", where each row will be assigned to either Group A or Group B</li>
+            <li>Click 'Submit' to process your file. Once processing is complete, you will be redirected to a download page where you can download the processed CSV file. The outputted split will be displayed under the new column name "Group". A plot showing how splits with better discrepancies are found over time is also displayed to allow the user to gauge whether to run for more or less time.</li>
         </ol>
         <footer style="text-align: center; margin-top: 20px;">
             <i>This website was created by Deyuan Li under the guidance of Professor Daniel Spielman. For more detailed and technical information on how the website works, click <a href="https://github.com/deyuanli8/deyuanli8.github.io">here</a>. </i>

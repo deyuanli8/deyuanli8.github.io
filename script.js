@@ -357,13 +357,18 @@ def normalize_data(df_vecs):
 
 def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns = None, normalize = True):
     def find_best(df_current, current_discrepancy, df_new):
+        nonlocal times, discrepancy_values 
         new_discrepancy = compute_discrepancy(df_new, disp = False)
         if current_discrepancy <= new_discrepancy:
             return (df_current, current_discrepancy)
         print("Better Discrepancy Found:", new_discrepancy)
+        times.append((time.time() - start_time)/60)
+        discrepancy_values.append(new_discrepancy)
         return (df_new, new_discrepancy)
     start_time = time.time()
     df = df_vecs.copy()
+    times = []
+    discrepancy_values = []
 
     if included_columns is None:
         included_columns = df.columns
@@ -386,6 +391,9 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
     df_best = local_search(df_reduced, 4, cols = df_reduced[abs(df_reduced['x'])!=1].index)
     best_discrepancy = compute_discrepancy(df_best, disp = False)
     print("Starting Discrepancy:", best_discrepancy)
+    times.append((time.time() - start_time)/60)
+    discrepancy_values.append(best_discrepancy)
+
     df_best, best_discrepancy = find_best(df_best, best_discrepancy, soft(df_reduced, 1, cols = df_reduced[abs(df_reduced['x'])!=1].index))
     df_best, best_discrepancy = find_best(df_best, best_discrepancy, carole(df_reduced, cols = df_reduced[abs(df_reduced['x'])!=1].index))
 
@@ -410,20 +418,24 @@ def get_split(df_vecs, minutes = 5, categorical_columns = None, included_columns
             df_best, best_discrepancy = find_best(df_best, best_discrepancy, df_new)
             max_soft = int(np.log(1e307 / m)/(best_discrepancy+2))
             max_local = int(np.log(1e307 / m)/np.log(best_discrepancy+2))
+    times.append((time.time() - start_time)/60)
+    discrepancy_values.append(best_discrepancy)
     print("Final Discrepancy:", best_discrepancy)
 
     df['Group'] = np.where(df_best['x'] > 0, 'A', 'B')
-    return df
+    return df, times, discrepancy_values
 
-df_output = get_split(df, minutes, categorical_columns, included_columns, normalize)
+df_output, times, discrepancy_values = get_split(df, minutes, categorical_columns, included_columns, normalize)
 
 
 output = df_output.to_csv(index=False)
-output
+output, times, discrepancy_values
             `;
             setTimeout(async () => {
-                let output = await pyodideInstance.runPython(pythonCodeCalculateDiscrepancy);
+                let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonCodeCalculateDiscrepancy);
 
+                sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
+                sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
                 // Handle the output
                 createDownloadLink(output, fileName);
                 isProcessing = false;
