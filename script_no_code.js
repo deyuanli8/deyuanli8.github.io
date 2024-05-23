@@ -149,7 +149,10 @@ def is_numeric(col):
                         // Handle the output
                         createDownloadLink(output, fileName);              
                     })
-                    .catch(error => console.error('Failed to run Python script:', error));
+                    .catch(error => {
+                        console.error('Failed to run Python script:', error);
+                        alert('An error occurred with the inputted file. Please refresh the page and try again.');
+                    });
                 isProcessing = false;
             }, 100); // Introduce a delay before running the Python code
         } else {
