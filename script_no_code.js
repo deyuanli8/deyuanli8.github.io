@@ -151,7 +151,7 @@ def is_numeric(col):
                     })
                     .catch(error => {
                         console.error('Failed to run Python script:', error);
-                        alert('An error occurred with the inputted file. Please refresh the page and try again.');
+                        alert('An error occurred with the inputted file. Your file may be too large or in an incorrect format. Please refresh the page and try again.');
                     });
                 isProcessing = false;
             }, 100); // Introduce a delay before running the Python code
@@ -291,7 +291,7 @@ def is_numeric(col):
 
     function resetForm() {
         document.getElementById('fileInput').value = ''; // Clear the file input
-        document.getElementById('runtimeToggle').textContent = 'Select Desired Runtime (mins)'; // Reset the runtime dropdown text
+        document.getElementById('runtimeToggle').textContent = initialRuntimeText; // Reset the runtime dropdown text
         document.getElementById('runtimeToggle').setAttribute('data-value', ''); // Reset the runtime dropdown data-value
         document.getElementById('categoricalColumnSelect').innerHTML = ''; // Clear the column select options
         document.getElementById('columnSelectDropdown').innerHTML = ''; // Clear the column select options
