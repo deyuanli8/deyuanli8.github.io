@@ -142,12 +142,9 @@ window.onload = () => {
                                                 .replace('PLACEHOLDER_NORMALIZE', normalizeData ? 'True' : 'False');
 
                     let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
-                    console.log(times);
-                    console.log(Array.from(times));
-                    console.log(JSON.stringify(Array.from(times)));
                     sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
                     sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
-                    // createDownloadLink(output, fileName);
+                    createDownloadLink(output, fileName);
                     isProcessing = false;
                 } catch (error) {
                     console.error('Failed to run Python script:', error);
@@ -297,5 +294,7 @@ window.onload = () => {
         document.getElementById('columnSelectDropdown').innerHTML = ''; // Clear the column select options
         document.getElementById('normalizeToggle').checked = true;
         document.getElementById('formContainer').style.display = 'none'; // Hide the form container
+        document.getElementById('loadingMessage').style.display = 'none';
+        document.getElementById('processingMessage').style.display = 'none';
     }
 };
