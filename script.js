@@ -95,7 +95,7 @@ def is_numeric(col):
 
                 document.getElementById('normalizeToggle').checked = true;
                 populateCategoricalColumnSelect(columnNames, nonNumericColumns, nonNumericColumns);
-                populateColumnSelectDropdown(columnNames, nonNumericColumns)
+                populateColumnSelectDropdown(columnNames, nonNumericColumns);
 
                 // Show the form container
                 document.getElementById('formContainer').style.display = 'block';
@@ -113,7 +113,7 @@ def is_numeric(col):
                 resetForm();
             }
         }
-        isProcessing = false
+        isProcessing = false;
     });
 
     document.getElementById('submitBtn').addEventListener('click', async (event) => {
@@ -125,8 +125,8 @@ def is_numeric(col):
         event.preventDefault(); // Prevent the default form submission
 
         let runtime = document.getElementById('runtimeToggle').getAttribute('data-value');
-        let categoricalColumns = Array.from(categoricalColumnSelect.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-        let includedColumns = Array.from(columnSelectDropdown.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+        let categoricalColumns = Array.from(document.getElementById('categoricalColumnSelect').querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+        let includedColumns = Array.from(document.getElementById('columnSelectDropdown').querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
         let normalizeData = document.getElementById('normalizeToggle').checked;
 
         if (runtime && includedColumns.length > 0) {
@@ -576,7 +576,7 @@ output, times, discrepancy_values
 
     function resetForm() {
         document.getElementById('fileInput').value = ''; // Clear the file input
-        document.getElementById('runtimeToggle').textContent = 'Select Desired Runtime (mins)'; // Reset the runtime dropdown text
+        document.getElementById('runtimeToggle').textContent = initialRuntimeText; // Reset the runtime dropdown text
         document.getElementById('runtimeToggle').setAttribute('data-value', ''); // Reset the runtime dropdown data-value
         document.getElementById('categoricalColumnSelect').innerHTML = ''; // Clear the column select options
         document.getElementById('columnSelectDropdown').innerHTML = ''; // Clear the column select options

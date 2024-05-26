@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 window.onload = () => {
-    // Load Pyodide and required packages
     async function loadPyodideAndPackages() {
         pyodideInstance = await loadPyodide({
             indexURL : "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"
@@ -35,14 +34,14 @@ window.onload = () => {
         `);
         return pyodideInstance;
     }
-    
+
     let pyodideReady = loadPyodideAndPackages();
     let fileName = '';
     let isProcessing = false;
     document.getElementById('fileInput').addEventListener('change', async (event) => {
         if (isProcessing) {
             console.log("Processing is already in progress.");
-            return; // Early exit if a process is already running
+            return;
         }
         isProcessing = true;
         let fileInput = document.getElementById('fileInput');
@@ -51,54 +50,53 @@ window.onload = () => {
         if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx'))) {
             let reader = new FileReader();
             reader.onload = async (e) => {
-                let arrayBuffer = e.target.result;
-                let data = new Uint8Array(arrayBuffer);
-                
-                document.getElementById('loadingMessage').style.display = 'block'; // Show the loading message
+                try {
+                    let arrayBuffer = e.target.result;
+                    let data = new Uint8Array(arrayBuffer);
 
-                await pyodideReady;
-                fileName = file.name;
-                pyodideInstance.FS.writeFile(fileName, data);
+                    document.getElementById('loadingMessage').style.display = 'block';
 
-                // Load the file into pyodide as a pandas dataframe
-                let pythonCodeLoadDf = `
-import pandas as pd
+                    await pyodideReady;
+                    fileName = file.name;
+                    pyodideInstance.FS.writeFile(fileName, data);
 
-try:
-    if '${fileName}'.endswith('.csv'):
-        df = pd.read_csv('${fileName}')
-    else:
-        df = pd.read_excel('${fileName}', engine='openpyxl')
-except Exception as e:
-    raise Exception("Unable to process file. Please ensure it is a CSV or a supported Excel format.")
+                    let columnNames = await pyodideInstance.runPython(`
+                        import pandas as pd
+                        try:
+                            df = pd.read_csv('${fileName}') if '${fileName}'.endswith('.csv') else pd.read_excel('${fileName}', engine='openpyxl')
+                        except Exception as e:
+                            raise Exception("Unable to process file. Please ensure it is a CSV or a supported Excel format.")
+                        df.columns.tolist()
+                    `);
 
-df.columns.tolist()
-                `;
-                let columnNames = await pyodideInstance.runPython(pythonCodeLoadDf);
-                // Check which columns do not consist entirely of numerical values
-                let pythonCodeFindCategorical = `
-import numpy as np
+                    let nonNumericColumns = await pyodideInstance.runPython(`
+                        import numpy as np
+                        df = pd.read_csv('${fileName}') if '${fileName}'.endswith('.csv') else pd.read_excel('${fileName}', engine='openpyxl')
+                        [col for col in df.columns if not np.issubdtype(df[col].dtype, np.number)]
+                    `);
 
-def is_numeric(col):
-    return np.issubdtype(df[col].dtype, np.number)
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    const runtimeToggle = document.getElementById('runtimeToggle');
+                    runtimeToggle.textContent = initialRuntimeText;
+                    runtimeToggle.setAttribute('data-value', '');
+                    selectedCategoricalColumns = nonNumericColumns.slice();
 
-[col for col in df.columns if not is_numeric(col)]
-                `;
-                let nonNumericColumns = await pyodideInstance.runPython(pythonCodeFindCategorical);
+                    document.getElementById('normalizeToggle').checked = true;
+                    populateCategoricalColumnSelect(columnNames, nonNumericColumns, nonNumericColumns);
+                    populateColumnSelectDropdown(columnNames, nonNumericColumns);
 
-
-                document.getElementById('loadingMessage').style.display = 'none'; // Hide the loading message
-                const runtimeToggle = document.getElementById('runtimeToggle');
-                runtimeToggle.textContent = initialRuntimeText;
-                runtimeToggle.setAttribute('data-value', '');
-                selectedCategoricalColumns = nonNumericColumns.slice();
-
-                document.getElementById('normalizeToggle').checked = true;
-                populateCategoricalColumnSelect(columnNames, nonNumericColumns, nonNumericColumns);
-                populateColumnSelectDropdown(columnNames, nonNumericColumns);
-
-                // Show the form container
-                document.getElementById('formContainer').style.display = 'block';
+                    document.getElementById('formContainer').style.display = 'block';
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    alert('Failed to process the file. Please check the format and try again.');
+                    fileName = '';
+                    resetForm();
+                }
+            };
+            reader.onerror = () => {
+                alert('Error reading file. Please ensure the file is not corrupted.');
+                fileName = '';
+                resetForm();
             };
             reader.readAsArrayBuffer(file);
         } else {
@@ -119,10 +117,10 @@ def is_numeric(col):
     document.getElementById('submitBtn').addEventListener('click', async (event) => {
         if (isProcessing) {
             console.log("Processing is already in progress.");
-            return; // Early exit if a process is already running
+            return;
         }
         isProcessing = true;
-        event.preventDefault(); // Prevent the default form submission
+        event.preventDefault();
 
         let runtime = document.getElementById('runtimeToggle').getAttribute('data-value');
         let categoricalColumns = Array.from(document.getElementById('categoricalColumnSelect').querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
@@ -131,30 +129,29 @@ def is_numeric(col):
 
         if (runtime && includedColumns.length > 0) {
             disableInputs();
-            document.getElementById('processingMessage').style.display = 'block'; // Show processing message
-            
+            document.getElementById('processingMessage').style.display = 'block';
+
             setTimeout(async () => {
-                const pythonScriptUrl = 'discrepancy_algos.py'; // Specify the path to your Python script
-                fetch(pythonScriptUrl)
-                    .then(response => response.text())
-                    .then(async (pythonScript) => {
-                        // Inject runtime and categoricalColumns into the Python script
-                        pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', parseInt(runtime))
+                try {
+                    const pythonScriptUrl = 'discrepancy_algos.py';
+                    let response = await fetch(pythonScriptUrl);
+                    let pythonScript = await response.text();
+                    pythonScript = pythonScript.replace('PLACEHOLDER_RUNTIME', parseInt(runtime))
                                                 .replace('PLACEHOLDER_CATEGORICAL_COLUMNS', JSON.stringify(categoricalColumns))
                                                 .replace('PLACEHOLDER_INCLUDED_COLUMNS', JSON.stringify(includedColumns))
                                                 .replace('PLACEHOLDER_NORMALIZE', normalizeData ? 'True' : 'False');
-                        let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
-                        sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
-                        sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
-                        // Handle the output
-                        createDownloadLink(output, fileName);              
-                    })
-                    .catch(error => {
-                        console.error('Failed to run Python script:', error);
-                        alert('An error occurred with the inputted file. Your file may be too large or in an incorrect format. Please refresh the page and try again.');
-                    });
+
+                    let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
+                    sessionStorage.setItem('xValues', JSON.stringify(times));
+                    sessionStorage.setItem('yValues', JSON.stringify(discrepancy_values));
+                    createDownloadLink(output, fileName);
+                } catch (error) {
+                    console.error('Failed to run Python script:', error);
+                    alert('An error occurred with the inputted file. Your file may be too large or in an incorrect format. Please refresh the page and try again.');
+                    resetForm();
+                }
                 isProcessing = false;
-            }, 100); // Introduce a delay before running the Python code
+            }, 100);
         } else {
             if(!runtime){
                 alert('Please select a runtime.');
@@ -165,7 +162,6 @@ def is_numeric(col):
             isProcessing = false;
         }
     });
-
 
     function populateCategoricalColumnSelect(selectedColumns, categoricalColumns, nonNumericColumns) {
         const categoricalColumnSelect = document.getElementById('categoricalColumnSelect');
