@@ -142,8 +142,8 @@ window.onload = () => {
                                                 .replace('PLACEHOLDER_NORMALIZE', normalizeData ? 'True' : 'False');
 
                     let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
-                    sessionStorage.setItem('xValues', JSON.stringify(times));
-                    sessionStorage.setItem('yValues', JSON.stringify(discrepancy_values));
+                    sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
+                    sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
                     createDownloadLink(output, fileName);
                 } catch (error) {
                     console.error('Failed to run Python script:', error);
