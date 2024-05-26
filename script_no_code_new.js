@@ -142,15 +142,19 @@ window.onload = () => {
                                                 .replace('PLACEHOLDER_NORMALIZE', normalizeData ? 'True' : 'False');
 
                     let [output, times, discrepancy_values] = await pyodideInstance.runPython(pythonScript);
+                    console.log(times);
+                    console.log(Array.from(times));
+                    console.log(JSON.stringify(Array.from(times)));
                     sessionStorage.setItem('xValues', JSON.stringify(Array.from(times)));
                     sessionStorage.setItem('yValues', JSON.stringify(Array.from(discrepancy_values)));
-                    createDownloadLink(output, fileName);
+                    // createDownloadLink(output, fileName);
+                    isProcessing = false;
                 } catch (error) {
                     console.error('Failed to run Python script:', error);
                     alert('An error occurred with the inputted file. Your file may be too large or in an incorrect format. Please refresh the page and try again.');
                     resetForm();
+                    isProcessing = false;
                 }
-                isProcessing = false;
             }, 100);
         } else {
             if(!runtime){
